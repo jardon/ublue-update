@@ -8,6 +8,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from ublue_update.config import find_default_config_file, load_value, Config
 
+toml_example = b"""
+[app]
+name = "MyApplication"
+version = "1.0.0"
+description = "A simple example application"
+"""
+
 @patch('ublue_update.config.log')
 @patch('ublue_update.config.os.path.isfile')
 def test_find_default_config_file_success_first(mock_isfile, mock_log):
@@ -36,45 +43,39 @@ def test_load_value_fail():
 
     assert load_value(dct, "key2") == None
 
-@patch('ublue_update.config.tomllib.load')
-@patch('builtins.open', new_callable=mock_open, read_data='mocked file content')
+@patch('builtins.open', new_callable=mock_open, read_data=toml_example)
 @patch('ublue_update.config.log.debug')
 @patch('ublue_update.config.os.path.abspath')
 @patch('ublue_update.config.Config.load_values')
-def test_load_config(mock_load_values, mock_abspath, mock_debug, mock_open, mock_load):
+def test_load_config(mock_load_values, mock_abspath, mock_debug, mock_open):
     config_path = "/path/to/config.toml"
-    fd = 3
-    mock_open.return_value = fd
-    mock_load.return_value = {"test_key", "test_val"}
     mock_abspath.return_value = config_path
 
     instance = Config()
     instance.load_config(config_path)
 
+    mock_load_values.assert_called_once_with({'app':{'name': "MyApplication", "version": "1.0.0",
+"description": "A simple example application"}})
     mock_open.assert_called_once_with(config_path, "rb")
-    mock_load.assert_called_once_with(fd)
     mock_abspath.assert_called_once_with(config_path)
     mock_debug.assert_called_once_with(f"Configuration loaded from {config_path}")
 
 @patch('ublue_update.config.find_default_config_file')
-@patch('ublue_update.config.tomllib.load')
-@patch('builtins.open', new_callable=mock_open, read_data='mocked file content')
+@patch('builtins.open', new_callable=mock_open, read_data=toml_example)
 @patch('ublue_update.config.log.debug')
 @patch('ublue_update.config.os.path.abspath')
 @patch('ublue_update.config.Config.load_values')
-def test_load_config_default(mock_load_values, mock_abspath, mock_debug, mock_open, mock_load, mock_find_default_config_file):
+def test_load_config_default(mock_load_values, mock_abspath, mock_debug, mock_open, mock_find_default_config_file):
     config_path = "/etc/ublue-update/ublue-update.toml"
-    fd = 3
     mock_find_default_config_file.return_value = config_path
-    mock_open.return_value = fd
-    mock_load.return_value = {"test_key", "test_val"}
     mock_abspath.return_value = config_path
 
     instance = Config()
     instance.load_config()
 
+    mock_load_values.assert_called_once_with({'app':{'name': "MyApplication", "version": "1.0.0",
+"description": "A simple example application"}})
     mock_open.assert_called_once_with(config_path, "rb")
-    mock_load.assert_called_once_with(fd)
     mock_abspath.assert_called_once_with(config_path)
     mock_debug.assert_called_once_with(f"Configuration loaded from {config_path}")
 
