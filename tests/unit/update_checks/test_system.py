@@ -23,7 +23,7 @@ def test_skopeo_inspect(mock_run):
     mock_skopeo_out.stdout = test_output
 
     mock_run.return_value = mock_skopeo_out
-    assert (skopeo_inspect(test_input), "mocked_digest")
+    assert skopeo_inspect(test_input) == "mocked_digest"
     mock_run.assert_called_once_with(
         ["skopeo", "inspect", test_input], capture_output=True
     )
